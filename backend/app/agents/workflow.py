@@ -83,13 +83,13 @@ async def confidence_node(state: AgentState) -> dict[str, Any]:
     text = state.get("file_text") or state.get("content")
     intent = state.get("detected_intent") or "unknown"
     try:
-        decision = await compute_confidence(text, intent)
+        score = await compute_confidence(text, intent)
         return {
-            "confidence_score": decision.score,
+            "confidence_score": score,
             **add_step(
                 state,
                 "confidence_node",
-                {"score": decision.score, "reasoning": decision.reasoning, "from_cache": decision.from_cache},
+                {"score": score, "reasoning": "confidence calculated"},
             ),
         }
     except Exception as exc:
@@ -107,12 +107,12 @@ async def router_node(state: AgentState) -> dict[str, Any]:
     try:
         decision = route(intent, score)
         return {
-            "assigned_agent": decision.agent,
+            "assigned_agent": decision.agent_type,
             "escalated": decision.escalated,
             **add_step(
                 state,
                 "router_node",
-                {"agent": decision.agent.value if decision.agent else None, "escalated": decision.escalated},
+                {"agent": decision.agent_type.value if decision.agent_type else None, "escalated": decision.escalated},
             ),
         }
     except Exception as exc:

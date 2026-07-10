@@ -13,6 +13,26 @@ from app.db.models.inbox import InboxSubmission, WorkflowStatus, AgentType
 from main import app
 
 
+@pytest.fixture(autouse=True)
+def override_auth():
+    from app.api.deps import get_current_user
+    from app.db.models.user import User, UserRole
+
+    async def mock_get_current_user():
+        return User(
+            email="test@flowpilot.ai",
+            full_name="Test User",
+            hashed_password="...",
+            role=UserRole.admin,
+            is_active=True
+        )
+
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    yield
+    if get_current_user in app.dependency_overrides:
+        del app.dependency_overrides[get_current_user]
+
+
 # ─── OCR Service Mock Test ───────────────────────────────────────────────────
 
 @pytest.mark.asyncio

@@ -54,6 +54,9 @@ class IntentDetectionResult:
         self.reasoning = reasoning
         self.from_cache = from_cache
 
+    def __repr__(self) -> str:
+        return f"IntentDetectionResult(intent={self.intent!r}, reasoning={self.reasoning!r}, from_cache={self.from_cache!r})"
+
 
 async def detect_intent(
     content: str,
