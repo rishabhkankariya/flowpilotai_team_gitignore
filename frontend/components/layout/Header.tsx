@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PageTitle } from './PageTitle';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +55,9 @@ export function Header() {
 
       {/* ── Actions ─────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
         {/* Notification Bell */}
         <TooltipProvider>
           <Tooltip>

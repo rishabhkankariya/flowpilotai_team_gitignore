@@ -17,20 +17,20 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Security
-    SECRET_KEY: str
+    SECRET_KEY: str = "supersecretkey"  # Default fallback for testing
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     # Database
-    DATABASE_URL: str
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/flowpilot"
 
     # Supabase
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
-    SUPABASE_SERVICE_KEY: str
+    SUPABASE_URL: str = "https://example.supabase.co"
+    SUPABASE_KEY: str = "supabasekey"
+    SUPABASE_SERVICE_KEY: str = "supabaseservicekey"
 
     # OpenAI
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: str = "openaiapikey"
 
     # CORS — stored as JSON string in env: '["http://localhost:3000"]'
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]

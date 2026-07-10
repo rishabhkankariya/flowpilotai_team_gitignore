@@ -1,5 +1,9 @@
+'use client';
+
+import { MetricsRow } from '@/components/dashboard/MetricsRow';
+import { ActivitySparkline } from '@/components/dashboard/ActivitySparkline';
+import { AgentUtilizationBar } from '@/components/dashboard/AgentUtilizationBar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpRight, Inbox, FileText, CheckCircle2 } from 'lucide-react';
 
 export default function DashboardPage() {
   return (
@@ -11,52 +15,13 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Modern Card Grid Stubs */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border border-border/80 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-semibold">Total Submissions</CardTitle>
-            <Inbox className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">1,248</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-[#00684a] font-semibold inline-flex items-center gap-0.5">
-                +12% <ArrowUpRight className="h-3 w-3" />
-              </span>{' '}
-              since yesterday
-            </p>
-          </CardContent>
-        </Card>
+      {/* Dynamic Metrics Cards Row */}
+      <MetricsRow />
 
-        <Card className="border border-border/80 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-semibold">Agent Accuracy</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">98.4%</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-[#00684a] font-semibold inline-flex items-center gap-0.5">
-                +0.5% <ArrowUpRight className="h-3 w-3" />
-              </span>{' '}
-              above SLA target
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border/80 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-semibold">Document Intelligence</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">412</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Invoices and forms processed
-            </p>
-          </CardContent>
-        </Card>
+      {/* Dynamic Charts Grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ActivitySparkline />
+        <AgentUtilizationBar />
       </div>
 
       {/* Feature showcase callout card */}
@@ -69,9 +34,12 @@ export default function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="relative z-10 pt-2 pb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#00ed64] hover:bg-[#00b545] text-[#001e2b] text-sm font-semibold rounded-full shadow transition-all cursor-pointer">
+          <a
+            href="/dashboard/inbox"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#00ed64] hover:bg-[#00b545] text-[#001e2b] text-sm font-semibold rounded-full shadow transition-all cursor-pointer"
+          >
             Explore AI Inbox
-          </div>
+          </a>
         </CardContent>
       </Card>
     </div>

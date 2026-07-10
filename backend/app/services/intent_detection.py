@@ -122,8 +122,8 @@ async def _call_gpt4o(text: str) -> IntentDetectionResult:
     llm = ChatOpenAI(
         model="gpt-4o",
         temperature=0.0,
-        openai_api_key=settings.OPENAI_API_KEY,
-        request_timeout=15,
+        openai_api_key=settings.OPENAI_API_KEY,  # type: ignore[call-arg]
+        request_timeout=15,  # type: ignore[call-arg]
         model_kwargs={"response_format": {"type": "json_object"}},
     )
 
@@ -142,7 +142,11 @@ async def _call_gpt4o(text: str) -> IntentDetectionResult:
         timeout=15.0,
     )
 
-    return _parse_response(response.content)
+    raw = response.content
+    if not isinstance(raw, str):
+        raw = str(raw)
+
+    return _parse_response(raw)
 
 
 def _parse_response(raw: str) -> IntentDetectionResult:

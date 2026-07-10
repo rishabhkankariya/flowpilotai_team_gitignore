@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useUIStore } from '@/store/ui';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import { AdminBanner } from '@/components/admin/AdminBanner';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { cn } from '@/lib/utils';
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -56,7 +58,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           className="flex-1 overflow-y-auto p-6"
           tabIndex={-1}
         >
-          {children}
+          <div className="mb-6">
+            <AdminBanner />
+          </div>
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
     </div>
