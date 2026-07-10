@@ -9,20 +9,31 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
-# Convert postgres:// to postgresql+asyncpg://
+# Normalise URL: postgresql:// -> postgresql+asyncpg://
 _db_url = settings.DATABASE_URL.replace(
     "postgresql://", "postgresql+asyncpg://"
 ).replace(
     "postgres://", "postgresql+asyncpg://"
 )
 
-engine = create_async_engine(
-    _db_url,
-    echo=settings.DEBUG,
-    pool_size=10,
-    max_overflow=20,
-    pool_pre_ping=True,
-)
+_is_sqlite = _db_url.startswith("sqlite")
+
+if _is_sqlite:
+    from sqlalchemy.pool import StaticPool
+    engine = create_async_engine(
+        _db_url,
+        echo=settings.DEBUG,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    engine = create_async_engine(
+        _db_url,
+        echo=settings.DEBUG,
+        pool_size=10,
+        max_overflow=20,
+        pool_pre_ping=True,
+    )
 
 AsyncSessionLocal = async_sessionmaker(
     engine,
