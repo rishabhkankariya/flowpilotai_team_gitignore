@@ -112,8 +112,9 @@ async def test_analytics_by_agent_route():
 async def test_analytics_by_day_route():
     mock_db = AsyncMock()
     mock_row = MagicMock()
-    mock_row.day = datetime.date(2026, 7, 10)
-    mock_row.count = 3
+    today = (datetime.datetime.now(datetime.timezone.utc)).date()
+    mock_row.day = today
+    mock_row.cnt = 3
 
     mock_db.execute = AsyncMock(return_value=[mock_row])
 
