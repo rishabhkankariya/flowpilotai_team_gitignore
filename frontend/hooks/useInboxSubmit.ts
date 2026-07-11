@@ -5,12 +5,15 @@ import api from '@/lib/api';
 import { InboxSubmission } from '@/types';
 import { useInboxStore } from '@/store/inbox';
 
+import { useNotificationsStore } from '@/store/notifications';
+
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 120_000; // 2 minutes max
 
 export function useInboxSubmit() {
   const { addSubmission, updateSubmission, setCurrentSubmission, setPolling } =
     useInboxStore();
+  const addNotification = useNotificationsStore((s) => s.addNotification);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -31,10 +34,19 @@ export function useInboxSubmit() {
           const updated = res.data;
           updateSubmission(updated);
 
-          if (
-            updated.status === 'completed' ||
-            updated.status === 'failed'
-          ) {
+          if (updated.status === 'completed') {
+            addNotification(
+              'Workflow Completed',
+              `Submission processed successfully by ${updated.assigned_agent || 'AI'} agent.`,
+              'success'
+            );
+            stopPolling();
+          } else if (updated.status === 'failed') {
+            addNotification(
+              'Workflow Failed',
+              updated.error_message || 'An error occurred during workflow execution.',
+              'error'
+            );
             stopPolling();
           }
         } catch {
@@ -44,10 +56,15 @@ export function useInboxSubmit() {
 
       // Safety timeout
       timeoutRef.current = setTimeout(() => {
+        addNotification(
+          'Workflow Timeout',
+          'The processing took longer than 2 minutes. Polling stopped.',
+          'warning'
+        );
         stopPolling();
       }, POLL_TIMEOUT_MS);
     },
-    [setPolling, updateSubmission, stopPolling],
+    [setPolling, updateSubmission, stopPolling, addNotification],
   );
 
   const submit = useCallback(
@@ -59,9 +76,14 @@ export function useInboxSubmit() {
       const submission = res.data;
       addSubmission(submission);
       setCurrentSubmission(submission);
+      addNotification(
+        'Workflow Started',
+        'Submission received and started running AI processing pipeline.',
+        'info'
+      );
       pollStatus(submission.id);
     },
-    [addSubmission, setCurrentSubmission, pollStatus],
+    [addSubmission, setCurrentSubmission, pollStatus, addNotification],
   );
 
   return { submit, stopPolling };

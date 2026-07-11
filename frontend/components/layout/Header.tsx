@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Menu, Bell, LogOut, User, Settings } from 'lucide-react';
+import { Menu, Bell, LogOut, User, Settings, Trash2, CheckCheck, Inbox } from 'lucide-react';
 import { useUIStore } from '@/store/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotificationsStore } from '@/store/notifications';
 import { PageTitle } from './PageTitle';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -17,12 +18,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -33,6 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 function getInitials(name: string): string {
   return name
@@ -47,6 +43,14 @@ export function Header() {
   const { toggleSidebar } = useUIStore();
   const { user, logout, updateUser } = useAuth();
 
+  // Notifications State
+  const notifications = useNotificationsStore((s) => s.notifications);
+  const markAsRead = useNotificationsStore((s) => s.markAsRead);
+  const markAllAsRead = useNotificationsStore((s) => s.markAllAsRead);
+  const clearAll = useNotificationsStore((s) => s.clearAll);
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Profile Modal State
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileName, setProfileName] = useState('');
   const [profileEmail, setProfileEmail] = useState('');
@@ -97,24 +101,87 @@ export function Header() {
           {/* Theme Toggle */}
           <ThemeToggle />
 
-          {/* Notification Bell */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Notifications (coming soon)"
-                  className="rounded-md"
-                >
-                  <Bell className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Notifications coming soon</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Notifications Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative rounded-md"
+                aria-label="Open notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 bg-card border border-border p-0">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Notifications ({unreadCount})
+                </span>
+                {notifications.length > 0 && (
+                  <div className="flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={markAllAsRead}
+                      className="text-[10px] font-semibold text-primary hover:underline flex items-center gap-0.5"
+                    >
+                      <CheckCheck className="h-3 w-3" /> Read all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearAll}
+                      className="text-[10px] font-semibold text-destructive hover:underline flex items-center gap-0.5"
+                    >
+                      <Trash2 className="h-3 w-3" /> Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="max-h-[300px] overflow-y-auto divide-y">
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                    <Inbox className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                    <p className="text-xs">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      onClick={() => markAsRead(n.id)}
+                      className={cn(
+                        "p-3 text-left transition-colors cursor-pointer hover:bg-muted/40",
+                        !n.read && "bg-muted/10 font-medium"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={cn(
+                          "text-xs",
+                          n.type === 'success' && "text-green-600 dark:text-green-400 font-semibold",
+                          n.type === 'error' && "text-destructive font-semibold",
+                          n.type === 'warning' && "text-yellow-600 dark:text-yellow-400 font-semibold",
+                          n.type === 'info' && "text-foreground font-semibold"
+                        )}>
+                          {n.title}
+                        </p>
+                        {!n.read && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary mt-1" />
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-normal">
+                        {n.message}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground/60 mt-1">
+                        {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* User Dropdown */}
           <DropdownMenu>
