@@ -103,6 +103,45 @@ async def finance_agent_node(state: AgentState) -> dict[str, Any]:
 
 
 async def _extract_invoice_data(text: str) -> dict[str, Any]:
+    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    if is_mock:
+        return {
+            "document_type": "invoice",
+            "vendor_name": "Cloudflare, Inc.",
+            "vendor_contact": "payments@cloudflare.com",
+            "invoice_number": "INV-2026-9081",
+            "invoice_date": "2026-07-11",
+            "due_date": "2026-07-25",
+            "payment_terms": "Net 14",
+            "currency": "USD",
+            "subtotal": 1600.0,
+            "tax_amount": 128.0,
+            "total_amount": 1728.0,
+            "line_items": [
+                {
+                    "description": "Enterprise Cloud Security Services - July 2026",
+                    "quantity": 1,
+                    "unit_price": 1250.0,
+                    "total": 1250.0
+                },
+                {
+                    "description": "Advanced DDoS Shielding & CDN",
+                    "quantity": 1,
+                    "unit_price": 350.0,
+                    "total": 350.0
+                }
+            ],
+            "payment_recommendation": "approve",
+            "anomalies": [],
+            "action_items": [
+                "Verify Cloudflare payment banking details match internal records",
+                "Log invoice INV-2026-9081 in accounting ERP ledger",
+                "Approve payment of $1,728.00 before due date July 25, 2026"
+            ],
+            "summary": "Cloudflare invoice INV-2026-9081 for security services and CDN shielding totaling $1,728.00. No anomalies detected.",
+            "confidence": 0.95
+        }
+
     llm = ChatOpenAI(
         model="gpt-4o",
         temperature=0.0,

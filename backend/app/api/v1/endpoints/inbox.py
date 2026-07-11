@@ -24,15 +24,27 @@ async def _run_workflow(submission_id: str, db_session_factory) -> None:
     from app.agents.workflow import run_inbox_workflow
     from app.db.session import AsyncSessionLocal
     import uuid as _uuid
+    import asyncio
+    from sqlalchemy.exc import NoResultFound
 
     async with AsyncSessionLocal() as db:
         try:
-            result = await db.execute(
-                select(InboxSubmission).where(
-                    InboxSubmission.id == _uuid.UUID(submission_id)
-                )
-            )
-            submission = result.scalar_one()
+            # Retry loop to wait for transaction commit visibility
+            submission = None
+            for attempt in range(5):
+                try:
+                    result = await db.execute(
+                        select(InboxSubmission).where(
+                            InboxSubmission.id == _uuid.UUID(submission_id)
+                        )
+                    )
+                    submission = result.scalar_one()
+                    break
+                except NoResultFound:
+                    if attempt == 4:
+                        raise
+                    await asyncio.sleep(0.2)
+
             await run_inbox_workflow(submission, db)
         except Exception as exc:
             logger.error(
@@ -54,6 +66,7 @@ async def _run_workflow(submission_id: str, db_session_factory) -> None:
                     await db2.commit()
             except Exception:
                 pass
+
 
 
 @router.post(
@@ -79,7 +92,7 @@ async def submit_inbox(
         status=WorkflowStatus.pending,
     )
     db.add(submission)
-    await db.flush()
+    await db.commit()
     await db.refresh(submission)
 
     submission_id = str(submission.id)

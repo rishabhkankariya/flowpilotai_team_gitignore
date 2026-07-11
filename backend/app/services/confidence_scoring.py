@@ -136,6 +136,12 @@ async def compute_confidence(
     if file_context:
         full_text = f"{content}\n\n--- Document Content ---\n{file_context}"
 
+    # Check if mock mode is active
+    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    if is_mock:
+        logger.info("confidence_from_mock", intent=intent, score=0.9)
+        return 0.9
+
     # 1. Keyword pre-pass (cheap, no API)
     keyword_result = _keyword_score(full_text, intent)
     if keyword_result is not None:

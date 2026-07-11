@@ -147,14 +147,17 @@ async def persist_node(state: AgentState, db: AsyncSession) -> dict[str, Any]:
         submission.detected_intent = state.get("detected_intent")
         submission.confidence_score = state.get("confidence_score")
         submission.assigned_agent = state.get("assigned_agent")
-        submission.error_message = state.get("error_message")
+        
+        # Propagate agent_error or error_message
+        error_msg = state.get("error_message") or state.get("agent_error")
+        submission.error_message = error_msg
 
         # Determine status
         agent_resp = state.get("agent_response")
         if agent_resp:
             # If agent response is present, mark as completed
             final_status = WorkflowStatus.completed
-        elif state.get("error_message"):
+        elif error_msg:
             final_status = WorkflowStatus.failed
         else:
             final_status = WorkflowStatus.processing

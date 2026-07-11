@@ -109,6 +109,27 @@ async def sales_agent_node(state: AgentState) -> dict[str, Any]:
 
 async def _extract_sales_data(text: str) -> dict[str, Any]:
     """Call GPT-4o to extract structured sales data."""
+    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    if is_mock:
+        return {
+            "company_name": "Acme Corporation",
+            "contact_name": "Sarah Jenkins",
+            "contact_email": "sjenkins@acmecorp.com",
+            "deal_size_estimate": "$25,000",
+            "product_interest": "Developer License Subscription",
+            "urgency": "hot",
+            "lead_score": 85,
+            "pain_points": ["Needs enterprise security", "Requires Google OAuth / SSO integration"],
+            "action_items": [
+                "Schedule a 30-minute product demonstration",
+                "Draft and send Enterprise Pricing Proposal",
+                "Introduce solutions architect to discuss SSO features"
+            ],
+            "summary": "High-intent enterprise sales lead requesting demo and pricing for 150 annual developer licenses.",
+            "follow_up_timeline": "Within 24 hours",
+            "confidence": 0.95
+        }
+
     llm = ChatOpenAI(
         model="gpt-4o",
         temperature=0.1,

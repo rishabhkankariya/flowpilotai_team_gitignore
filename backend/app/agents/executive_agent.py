@@ -117,6 +117,36 @@ async def _generate_executive_brief(
     confidence_score: float,
     routing_reason: str,
 ) -> dict[str, Any]:
+    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    if is_mock:
+        return {
+            "content_type": "Q2 Operations Report",
+            "executive_summary": "Q2 operations show solid 14% QoQ revenue growth reaching $1.2M ARR, and churn drop to 2.1%. However, infrastructure costs rose 28% due to LLM API usage. Strategic focus is required to optimize token caching and explore self-hosting options.",
+            "key_themes": ["Revenue Growth", "Churn Reduction", "Infrastructure Cost Inflation"],
+            "key_metrics": [
+                {"metric": "QoQ Revenue Growth", "value": "14%"},
+                {"metric": "ARR", "value": "$1.2M"},
+                {"metric": "Churn Rate", "value": "2.1%"},
+                {"metric": "Infrastructure Cost Increase", "value": "28%"}
+            ],
+            "strategic_implications": [
+                "LLM cost inflation threatens gross margins unless caching optimizations are implemented.",
+                "Automated support agent queues are highly successful, validating the AI agent strategy."
+            ],
+            "recommended_decisions": {
+                "decision": "Optimize LLM token caching & evaluate self-hosting open-source LLMs",
+                "impact": "Reduces API costs by estimated 30-40% by Q4",
+                "urgency": "high"
+            },
+            "action_items": [
+                "Deploy Redis token caching layer in production API gateway",
+                "Benchmark Llama-3 self-hosting costs vs GPT-4o API billing",
+                "Schedule Q2 performance review meeting with engineering leadership"
+            ],
+            "priority": "high",
+            "confidence": 0.9
+        }
+
     llm = ChatOpenAI(
         model="gpt-4o",
         temperature=0.2,

@@ -77,6 +77,24 @@ async def detect_intent(
     if file_context:
         full_text = f"{content}\n\n--- Attached Document ---\n{file_context}"
 
+    # Check if mock mode is active
+    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    if is_mock:
+        text_lower = full_text.lower()
+        intent = "unknown"
+        if "invoice" in text_lower or "inv-" in text_lower or "bill" in text_lower:
+            intent = "invoice_processing"
+        elif any(k in text_lower for k in ["procurement", "license", "pricing", "buy", "sales", "demo"]):
+            intent = "sales_lead"
+        elif any(k in text_lower for k in ["bug", "crash", "oauth", "support", "broken", "login"]):
+            intent = "customer_support"
+        elif any(k in text_lower for k in ["operations", "kpi", "arr", "report", "summary"]):
+            intent = "executive_summary"
+            
+        reasoning = "Simulated intent detection (mock mode active for placeholder API key)"
+        logger.info("intent_detected_mock", intent=intent)
+        return IntentDetectionResult(intent=intent, reasoning=reasoning, from_cache=False)
+
     # Cache key based on content hash
     import hashlib
     cache_key = hashlib.sha256(full_text.encode("utf-8")).hexdigest()

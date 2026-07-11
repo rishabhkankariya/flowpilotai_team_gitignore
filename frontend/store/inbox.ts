@@ -15,19 +15,21 @@ interface InboxActions {
   toggleActionItem: (submissionId: string, itemIndex: number) => void;
 }
 
-export const useInboxStore = create<InboxState & InboxActions>((set) => ({
+export const useInboxStore = create<InboxState & InboxActions>()((set) => ({
   submissions: [],
   currentSubmission: null,
   isPolling: false,
 
   addSubmission: (s) =>
     set((state) => ({ submissions: [s, ...state.submissions].slice(0, 20) })),
+
   updateSubmission: (s) =>
     set((state) => ({
       submissions: state.submissions.map((sub) => (sub.id === s.id ? s : sub)),
       currentSubmission:
         state.currentSubmission?.id === s.id ? s : state.currentSubmission,
     })),
+
   setCurrentSubmission: (s) => set({ currentSubmission: s }),
   setPolling: (v) => set({ isPolling: v }),
 
@@ -37,12 +39,12 @@ export const useInboxStore = create<InboxState & InboxActions>((set) => ({
         if (sub.id !== submissionId || !sub.result) return sub;
         const agentResponse = sub.result.agent_response;
         if (!agentResponse) return sub;
-        
+
         const currentCompleted = agentResponse.completed_action_items || [];
         const completed = currentCompleted.includes(itemIndex)
           ? currentCompleted.filter((i: number) => i !== itemIndex)
           : [...currentCompleted, itemIndex];
-          
+
         return {
           ...sub,
           result: {
@@ -57,8 +59,9 @@ export const useInboxStore = create<InboxState & InboxActions>((set) => ({
 
       return {
         submissions: state.submissions.map(updateSub),
-        currentSubmission: state.currentSubmission ? updateSub(state.currentSubmission) : null,
+        currentSubmission: state.currentSubmission
+          ? updateSub(state.currentSubmission)
+          : null,
       };
     }),
 }));
-
