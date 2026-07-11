@@ -24,7 +24,7 @@ export function FileUpload({ onUploadComplete, onRemove, disabled }: FileUploadP
   };
 
   return (
-    <div className="border border-dashed border-border p-6 rounded-lg text-center bg-muted/20">
+    <div className="border border-dashed border-border p-4 rounded-lg text-center bg-muted/20">
       {selectedFile ? (
         <div className="space-y-2">
           <p className="text-sm font-medium">{selectedFile}</p>

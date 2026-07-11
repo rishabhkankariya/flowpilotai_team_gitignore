@@ -156,7 +156,7 @@ export function ResultPanel() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed p-12 text-center h-[400px]"
+          className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed p-12 text-center h-[400px] lg:h-full"
         >
           <Brain className="h-12 w-12 text-muted-foreground/40 animate-pulse" />
           <div>
@@ -173,9 +173,10 @@ export function ResultPanel() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
+          className="lg:h-full lg:flex lg:flex-col lg:min-h-0"
         >
-          <Card className="shadow-sm border-border">
-            <CardHeader className="pb-3 border-b">
+          <Card className="shadow-sm border-border lg:h-full lg:flex lg:flex-col lg:min-h-0">
+            <CardHeader className="pb-3 border-b flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary animate-pulse" /> Workflow Analysis
@@ -188,7 +189,7 @@ export function ResultPanel() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6 pt-4">
+            <CardContent className="space-y-6 pt-4 lg:flex-1 lg:overflow-y-auto pr-1">
               {/* Agent + Intent metadata */}
               {(currentSubmission.assigned_agent || currentSubmission.detected_intent) && (
                 <div className="flex flex-wrap gap-2">

@@ -49,7 +49,7 @@ export function InboxForm() {
           onChange={(e) => setContent(e.target.value)}
           placeholder="Describe your request, paste an email, or ask a question… (e.g., 'Draft a quotation for Acme Corp' or upload an invoice below)"
           className={cn(
-            'min-h-[160px] resize-none pr-4 pb-8',
+            'min-h-[100px] lg:min-h-[110px] resize-none pr-4 pb-8',
             isOverLimit && 'border-destructive focus-visible:ring-destructive',
           )}
           disabled={isSubmitting || isPolling}
