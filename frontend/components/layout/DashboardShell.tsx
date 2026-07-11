@@ -55,7 +55,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <Header />
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto p-6"
+          className="flex-1 overflow-y-auto p-6 pb-16 md:pb-24"
           tabIndex={-1}
         >
           <div className="mb-6">
