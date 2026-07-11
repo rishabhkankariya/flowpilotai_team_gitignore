@@ -134,12 +134,15 @@ async def persist_node(state: AgentState, db: AsyncSession) -> dict[str, Any]:
     """Write intermediate and final results to database."""
     submission_id = state.get("submission_id")
     if not submission_id:
-        return {}
+        return {"final_status": "failed", "error_message": "Missing submission_id"}
 
     try:
+        import uuid as _uuid
         from sqlalchemy import select
         res = await db.execute(
-            select(InboxSubmission).where(InboxSubmission.id == submission_id)
+            select(InboxSubmission).where(
+                InboxSubmission.id == _uuid.UUID(submission_id)
+            )
         )
         submission = res.scalar_one()
 
@@ -234,7 +237,8 @@ def build_workflow_graph(db: AsyncSession) -> Any:
     graph.add_node("persist_node", _persist)
 
     def ocr_check_node(s: AgentState) -> dict[str, Any]:
-        return {}
+        # LangGraph requires at least one key to be written; use a no-op step marker
+        return add_step(s, "ocr_check", {})
 
     # Entry point
     graph.set_entry_point("ocr_check")
