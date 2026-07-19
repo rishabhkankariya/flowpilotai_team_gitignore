@@ -43,8 +43,11 @@ class Settings(BaseSettings):
     AZURE_OPENAI_API_VERSION: str = "2024-02-01"
     AZURE_OPENAI_DEPLOYMENT_NAME: str = ""
 
-    # CORS — stored as JSON string in env: '["http://localhost:3000"]'
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "https://flowpilotai-team-gitignore.vercel.app",
+        "https://flowpilotai-team-gitignore-git-master-gitignore.vercel.app",
+    ]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
