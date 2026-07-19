@@ -89,7 +89,7 @@ async def test_get_submission_by_id_owner(client: AsyncClient):
     sub_id = submit_response.json()["id"]
 
     response = await client.get(
-        f"/api/v1/inbox/{sub_id}",
+        f"/api/v1/inbox/by-id/{sub_id}",
         headers=headers,
     )
     assert response.status_code == 200
@@ -102,7 +102,7 @@ async def test_get_submission_by_id_non_existent(client: AsyncClient):
     headers = await get_auth_headers(client, "fetch_not_found@example.com")
     non_existent_uuid = "550e8400-e29b-41d4-a716-446655440000"
     response = await client.get(
-        f"/api/v1/inbox/{non_existent_uuid}",
+        f"/api/v1/inbox/by-id/{non_existent_uuid}",
         headers=headers,
     )
     assert response.status_code == 404
@@ -122,7 +122,7 @@ async def test_get_submission_by_id_non_owner(client: AsyncClient):
 
     # Request as non-owner
     response = await client.get(
-        f"/api/v1/inbox/{sub_id}",
+        f"/api/v1/inbox/by-id/{sub_id}",
         headers=other_headers,
     )
     assert response.status_code == 404  # owner enforcement: 404 to avoid ID enumeration
@@ -132,7 +132,7 @@ async def test_get_submission_by_id_non_owner(client: AsyncClient):
 async def test_get_submission_by_id_invalid_uuid(client: AsyncClient):
     headers = await get_auth_headers(client, "invalid_uuid@example.com")
     response = await client.get(
-        "/api/v1/inbox/invalid-uuid-format-string",
+        "/api/v1/inbox/by-id/invalid-uuid-format-string",
         headers=headers,
     )
     assert response.status_code == 404

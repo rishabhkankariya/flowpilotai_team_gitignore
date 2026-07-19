@@ -32,6 +32,17 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = "openaiapikey"
 
+    # Local LLM
+    USE_LOCAL_LLM: bool = False
+    LOCAL_LLM_MODEL: str = "qwen2.5:0.5b"
+
+    # Azure OpenAI
+    USE_AZURE_OPENAI: bool = False
+    AZURE_OPENAI_API_KEY: str = ""
+    AZURE_OPENAI_ENDPOINT: str = ""
+    AZURE_OPENAI_API_VERSION: str = "2024-02-01"
+    AZURE_OPENAI_DEPLOYMENT_NAME: str = ""
+
     # CORS — stored as JSON string in env: '["http://localhost:3000"]'
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
 
@@ -44,6 +55,14 @@ class Settings(BaseSettings):
             except json.JSONDecodeError:
                 return [origin.strip() for origin in v.split(",")]
         return v
+
+    @property
+    def is_mock_mode(self) -> bool:
+        """Check if the system should run in mock mode."""
+        if self.USE_LOCAL_LLM or self.USE_AZURE_OPENAI:
+            return False
+        # If OpenAI key is placeholder or default, run in mock mode
+        return self.OPENAI_API_KEY.startswith("sk-placeholder") or self.OPENAI_API_KEY == "openaiapikey"
 
 
 settings = Settings()  # type: ignore[call-arg]

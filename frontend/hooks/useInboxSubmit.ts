@@ -30,7 +30,7 @@ export function useInboxSubmit() {
       setPolling(true);
       pollRef.current = setInterval(async () => {
         try {
-          const res = await api.get<InboxSubmission>(`/inbox/${id}`);
+          const res = await api.get<InboxSubmission>(`/inbox/by-id/${id}`);
           const updated = res.data;
           updateSubmission(updated);
 

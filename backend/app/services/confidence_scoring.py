@@ -14,7 +14,6 @@ import asyncio
 import re
 import structlog
 from typing import Optional
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from app.core.config import settings
 
@@ -137,7 +136,7 @@ async def compute_confidence(
         full_text = f"{content}\n\n--- Document Content ---\n{file_context}"
 
     # Check if mock mode is active
-    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    is_mock = settings.is_mock_mode
     if is_mock:
         logger.info("confidence_from_mock", intent=intent, score=0.9)
         return 0.9
@@ -152,11 +151,11 @@ async def compute_confidence(
         )
         return keyword_result
 
-    # 2. GPT-4o scoring
+    # 2. LLM scoring
     try:
         score = await _gpt4o_score(full_text, intent)
         logger.info(
-            "confidence_from_gpt4o",
+            "confidence_from_llm",
             intent=intent,
             score=score,
         )
@@ -172,14 +171,9 @@ async def compute_confidence(
 
 
 async def _gpt4o_score(text: str, intent: str) -> float:
-    """Call GPT-4o to score the confidence."""
-    llm = ChatOpenAI(
-        model="gpt-4o",
-        temperature=0.0,
-        openai_api_key=settings.OPENAI_API_KEY,  # type: ignore[call-arg]
-        request_timeout=10,  # type: ignore[call-arg]
-        model_kwargs={"response_format": {"type": "json_object"}},
-    )
+    """Call LLM to score the confidence."""
+    from app.services.llm import get_llm
+    llm = get_llm(temperature=0.0, response_format_json=True)
 
     truncated = text[:4000]
     system = SCORING_SYSTEM_PROMPT.format(intent=intent)
@@ -193,7 +187,7 @@ async def _gpt4o_score(text: str, intent: str) -> float:
 
     response = await asyncio.wait_for(
         llm.ainvoke(messages),
-        timeout=10.0,
+        timeout=90.0,
     )
 
     if not isinstance(response.content, str):

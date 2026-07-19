@@ -8,7 +8,6 @@ import json
 import asyncio
 import structlog
 from typing import Any
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from app.agents.state import AgentState, add_step
 from app.agents.types import AgentResponse
@@ -85,15 +84,27 @@ async def support_agent_node(state: AgentState) -> dict[str, Any]:
         }
 
     except Exception as exc:
-        logger.error("support_agent_error", submission_id=state.get("submission_id"), error=str(exc))
+        import traceback
+        tb = traceback.format_exc()
+        logger.error("support_agent_error", submission_id=state.get("submission_id"), error=str(exc), exc_type=type(exc).__name__, traceback=tb)
         return {
-            "agent_error": f"Support agent error: {str(exc)}",
-            **add_step(state, "support_agent_node", {}, error=str(exc)),
+            "agent_error": f"Support agent error: {type(exc).__name__}: {str(exc)}",
+            **add_step(state, "support_agent_node", {"traceback": tb}, error=str(exc)),
         }
 
 
+class ChatOpenAI:
+    def __new__(cls, *args, **kwargs):
+        from app.services.llm import get_llm
+        temp = kwargs.get("temperature", 0.1)
+        response_format_json = False
+        if "model_kwargs" in kwargs and kwargs["model_kwargs"].get("response_format", {}).get("type") == "json_object":
+            response_format_json = True
+        return get_llm(temperature=temp, response_format_json=response_format_json)
+
+
 async def _analyze_support_issue(text: str) -> dict[str, Any]:
-    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    is_mock = settings.is_mock_mode
     if is_mock:
         return {
             "issue_type": "bug",
@@ -119,7 +130,7 @@ async def _analyze_support_issue(text: str) -> dict[str, Any]:
         model="gpt-4o",
         temperature=0.1,
         openai_api_key=settings.OPENAI_API_KEY,  # type: ignore[call-arg]
-        request_timeout=20,  # type: ignore[call-arg]
+        request_timeout=90,  # type: ignore[call-arg]
         model_kwargs={"response_format": {"type": "json_object"}},
     )
     truncated = text[:6000]
@@ -127,7 +138,7 @@ async def _analyze_support_issue(text: str) -> dict[str, Any]:
         SystemMessage(content=SUPPORT_SYSTEM_PROMPT),
         HumanMessage(content=f"Support request:\n\n{truncated}"),
     ]
-    response = await asyncio.wait_for(llm.ainvoke(messages), timeout=20.0)
+    response = await asyncio.wait_for(llm.ainvoke(messages), timeout=90.0)
 
     raw = response.content
     if not isinstance(raw, str):

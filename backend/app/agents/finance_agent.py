@@ -8,7 +8,6 @@ import json
 import asyncio
 import structlog
 from typing import Any
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from app.agents.state import AgentState, add_step
 from app.agents.types import AgentResponse
@@ -102,8 +101,18 @@ async def finance_agent_node(state: AgentState) -> dict[str, Any]:
         }
 
 
+class ChatOpenAI:
+    def __new__(cls, *args, **kwargs):
+        from app.services.llm import get_llm
+        temp = kwargs.get("temperature", 0.1)
+        response_format_json = False
+        if "model_kwargs" in kwargs and kwargs["model_kwargs"].get("response_format", {}).get("type") == "json_object":
+            response_format_json = True
+        return get_llm(temperature=temp, response_format_json=response_format_json)
+
+
 async def _extract_invoice_data(text: str) -> dict[str, Any]:
-    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    is_mock = settings.is_mock_mode
     if is_mock:
         return {
             "document_type": "invoice",
@@ -146,7 +155,7 @@ async def _extract_invoice_data(text: str) -> dict[str, Any]:
         model="gpt-4o",
         temperature=0.0,
         openai_api_key=settings.OPENAI_API_KEY,  # type: ignore[call-arg]
-        request_timeout=25,  # type: ignore[call-arg]
+        request_timeout=90,  # type: ignore[call-arg]
         model_kwargs={"response_format": {"type": "json_object"}},
     )
     truncated = text[:8000]  # Longer limit for OCR-heavy documents
@@ -154,7 +163,7 @@ async def _extract_invoice_data(text: str) -> dict[str, Any]:
         SystemMessage(content=FINANCE_SYSTEM_PROMPT),
         HumanMessage(content=f"Extract financial data from:\n\n{truncated}"),
     ]
-    response = await asyncio.wait_for(llm.ainvoke(messages), timeout=25.0)
+    response = await asyncio.wait_for(llm.ainvoke(messages), timeout=90.0)
 
     raw = response.content
     if not isinstance(raw, str):

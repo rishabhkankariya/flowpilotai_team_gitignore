@@ -1,9 +1,11 @@
 import math
+import uuid as _uuid
 import structlog
-from fastapi import APIRouter, BackgroundTasks, status
+from fastapi import APIRouter, BackgroundTasks, UploadFile, File, HTTPException, status
 from sqlalchemy import select, func
 
 from app.api.deps import DBSession, CurrentUser
+from app.core.config import settings
 from app.core.exceptions import NotFoundError
 from app.db.models.inbox import InboxSubmission, WorkflowStatus
 from app.schemas.inbox import (
@@ -14,6 +16,69 @@ from app.schemas.inbox import (
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
+
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+@router.post(
+    "/upload-file",
+    status_code=status.HTTP_201_CREATED,
+    summary="Upload a file to Supabase Storage and return its URL",
+)
+async def upload_file(
+    file: UploadFile = File(...),
+    current_user: CurrentUser = None,
+) -> dict:
+    """
+    Accepts a PDF/PNG/JPG file, uploads to Supabase Storage under
+    the user's folder, and returns the public URL.
+    """
+    if file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {file.content_type}. Allowed: PDF, PNG, JPG.",
+        )
+
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File exceeds 10 MB limit.")
+
+    import httpx
+
+    file_ext = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "bin"
+    file_name = f"{_uuid.uuid4().hex}.{file_ext}"
+    storage_path = f"uploads/{current_user.id}/{file_name}"
+
+    supabase_url = settings.SUPABASE_URL.rstrip("/")
+    supabase_key = settings.SUPABASE_SERVICE_KEY
+
+    upload_url = f"{supabase_url}/storage/v1/object/uploads/{storage_path}"
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            upload_url,
+            content=contents,
+            headers={
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": file.content_type or "application/octet-stream",
+                "x-upsert": "true",
+            },
+        )
+
+    if resp.status_code not in (200, 201):
+        logger.error("supabase_upload_failed", status=resp.status_code, body=resp.text[:300])
+        raise HTTPException(status_code=502, detail=f"File upload failed: {resp.status_code}")
+
+    public_url = f"{supabase_url}/storage/v1/object/public/uploads/{storage_path}"
+    logger.info("file_uploaded", user_id=str(current_user.id), path=storage_path)
+
+    return {"url": public_url, "path": storage_path}
 
 
 async def _run_workflow(submission_id: str, db_session_factory) -> None:
@@ -110,7 +175,7 @@ async def submit_inbox(
 
 
 @router.get(
-    "/{submission_id}",
+    "/by-id/{submission_id}",
     response_model=InboxSubmissionResponse,
     summary="Get a submission by ID",
 )

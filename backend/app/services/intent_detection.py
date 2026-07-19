@@ -8,7 +8,6 @@ import asyncio
 import structlog
 from typing import Optional
 from cachetools import TTLCache
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from app.core.config import settings
 
@@ -78,7 +77,7 @@ async def detect_intent(
         full_text = f"{content}\n\n--- Attached Document ---\n{file_context}"
 
     # Check if mock mode is active
-    is_mock = settings.OPENAI_API_KEY.startswith("sk-placeholder") or settings.OPENAI_API_KEY == "openaiapikey"
+    is_mock = settings.is_mock_mode
     if is_mock:
         text_lower = full_text.lower()
         intent = "unknown"
@@ -109,7 +108,7 @@ async def detect_intent(
                 from_cache=True,
             )
 
-    # Call GPT-4o
+    # Call LLM
     try:
         result = await _call_gpt4o(full_text)
     except Exception as exc:
@@ -136,14 +135,9 @@ async def detect_intent(
 
 
 async def _call_gpt4o(text: str) -> IntentDetectionResult:
-    """Internal: call GPT-4o with timeout and parse response."""
-    llm = ChatOpenAI(
-        model="gpt-4o",
-        temperature=0.0,
-        openai_api_key=settings.OPENAI_API_KEY,  # type: ignore[call-arg]
-        request_timeout=15,  # type: ignore[call-arg]
-        model_kwargs={"response_format": {"type": "json_object"}},
-    )
+    """Internal: call LLM with timeout and parse response."""
+    from app.services.llm import get_llm
+    llm = get_llm(temperature=0.0, response_format_json=True)
 
     # Truncate to ~6000 chars to stay within token limits
     truncated = text[:6000]
@@ -157,7 +151,7 @@ async def _call_gpt4o(text: str) -> IntentDetectionResult:
 
     response = await asyncio.wait_for(
         llm.ainvoke(messages),
-        timeout=15.0,
+        timeout=90.0,
     )
 
     raw = response.content

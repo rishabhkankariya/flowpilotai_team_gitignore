@@ -19,6 +19,11 @@ import pytesseract
 
 logger = structlog.get_logger(__name__)
 
+# Windows: set tesseract path if not in system PATH
+_tess_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+if os.path.exists(_tess_path):
+    pytesseract.pytesseract.tesseract_cmd = _tess_path
+
 SUPPORTED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg"}
 PDF_CONTENT_TYPE = "application/pdf"
 MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024  # 15MB

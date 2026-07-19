@@ -3,6 +3,10 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.core.config import settings
+settings.USE_LOCAL_LLM = False
+settings.USE_AZURE_OPENAI = False
+
 from app.db.base import Base
 from app.api.deps import get_db
 from main import app
